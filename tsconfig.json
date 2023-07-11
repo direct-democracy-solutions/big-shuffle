@@ -1,8 +1,13 @@
 {
   "include": [ "src/**/*.ts" ],
-  "exclude": [ "src/**/*.spec.ts" ],
+  "exclude": [
+    "src/**/*.spec.ts",
+  ],
   "compilerOptions": {
     "strict": true,
     "outDir": "lib",
+    "target": "es6",
+    "moduleResolution": "node",
+    "declaration": true
   }
 }
