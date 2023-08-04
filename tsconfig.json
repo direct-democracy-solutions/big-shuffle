@@ -5,9 +5,10 @@
   ],
   "compilerOptions": {
     "strict": true,
-    "outDir": "lib",
-    "target": "es6",
+    "module": "commonjs",
     "moduleResolution": "node",
+    "outDir": "lib",
+    "target": "es2017",
     "declaration": true
   }
 }

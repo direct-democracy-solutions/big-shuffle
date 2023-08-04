@@ -1,7 +1,7 @@
 import { fc, it } from '@fast-check/jest';
 import * as memfs from 'memfs';
 import { PileManager } from './pileManager';
-import { arrayFromAsync } from '../test/helpers';
+import { arrayFromAsync, dirExists } from '../test/helpers';
 import { Pile } from './pile';
 import MockedObject = jest.MockedObject;
 
@@ -13,9 +13,13 @@ interface PileManagerParams {
   numPiles: number;
 }
 
+// See minimum reproductions in `fs.spec.ts` and `memfs.spec.ts`.
+// Bug report: https://github.com/streamich/memfs/issues/938
+const memfsBuggedDirectoryName = '__proto__';
+
 const arbPileNum: fc.Arbitrary<number> = fc.integer({ min: 1, max: 100 });
 const arbPileManagerParams: fc.Arbitrary<PileManagerParams> = fc.record({
-  pileDir: fc.webPath(),
+  pileDir: fc.webPath().filter((p) => !p.includes(memfsBuggedDirectoryName)),
   numPiles: arbPileNum,
 });
 
@@ -60,11 +64,11 @@ describe('PileManager', () => {
 
   afterAll(() => {
     jest.restoreAllMocks();
+    memfs.vol.reset();
   });
 
   afterEach(() => {
     jest.clearAllMocks();
-    memfs.vol.reset();
   });
 
   describe('deal', () => {
@@ -121,34 +125,21 @@ describe('PileManager', () => {
     it.prop([arbPileManagerParamsWithPiles])(
       'should delete any created directories after the last pile is read',
       async (params) => {
-        const pileDirExistedBefore: boolean = await memfs.fs.promises
-          .access(params.pileManager.pileDir, memfs.fs.promises.constants.R_OK)
-          .then(() => true)
-          .catch(() => false);
+        const dirPath = params.pileManager.pileDir;
+        const pileDirExistedBefore: boolean = await dirExists(dirPath);
         const pileManager = new PileManager(
-          params.pileManager.pileDir,
+          dirPath,
           params.pileManager.numPiles,
         );
         jest
           .spyOn(pileManager, 'dispensePile')
           .mockImplementation((n) => Promise.resolve(params.piles[n]));
-        try {
-          const items = pileManager.items()[Symbol.asyncIterator]();
-          for (const _ of params.piles.slice(0, -1).flat()) {
-            await items.next();
-          }
+        const items = pileManager.items()[Symbol.asyncIterator]();
+        for (const _ of params.piles.slice(0, -1).flat()) {
           await items.next();
-          const pileDirExistsAfter = await memfs.fs.promises
-            .access(
-              params.pileManager.pileDir,
-              memfs.fs.promises.constants.R_OK,
-            )
-            .then(() => true)
-            .catch(() => false);
-          expect(pileDirExistsAfter).toEqual(pileDirExistedBefore);
-        } finally {
-          memfs.vol.reset();
         }
+        await items.next();
+        expect(await dirExists(dirPath)).toEqual(pileDirExistedBefore);
       },
     );
 

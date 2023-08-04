@@ -95,10 +95,6 @@ describe('shuffle', () => {
     );
 
     await outStream;
-
-    console.log(
-      `Wrote ${countOut} shuffled records from ${countIn} input records`,
-    );
     expect(countOut).toEqual(countIn);
   });
 });

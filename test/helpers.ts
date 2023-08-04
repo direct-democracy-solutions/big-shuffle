@@ -1,4 +1,5 @@
-import { open, FileHandle } from 'fs/promises';
+import { FileHandle, open } from 'fs/promises';
+import * as memfs from 'memfs';
 
 export async function* asyncify<T>(it: Iterable<T>): AsyncIterable<T> {
   for (const i of it) {
@@ -26,6 +27,13 @@ export async function ifAFileWasOpened<T>(
   } finally {
     jest.clearAllMocks();
   }
+}
+
+export function dirExists(path: string): Promise<boolean> {
+  return memfs.fs.promises
+    .access(path, memfs.fs.promises.constants.R_OK)
+    .then(() => true)
+    .catch(() => false);
 }
 
 export class Delayed<T> {

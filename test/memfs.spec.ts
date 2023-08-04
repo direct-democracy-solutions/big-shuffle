@@ -1,5 +1,6 @@
 import * as fs from 'fs/promises';
 import * as memfs from 'memfs';
+import { dirExists } from "./helpers";
 
 jest.mock('fs/promises');
 
@@ -55,5 +56,17 @@ describe('memfs integration', () => {
     const f = await fs.open('/my-file-8', 'w');
     await new Promise((resolve) => setTimeout(resolve, 100));
     await expect(f.writeFile('abc')).resolves.toBeUndefined();
+  });
+
+  // Bug report: https://github.com/streamich/memfs/issues/938
+  it.failing('should allow directories named __proto__', async () => {
+    const dirName = '/__proto__';
+    expect(await dirExists(dirName)).toBe(false);
+    await memfs.fs.promises.mkdir(dirName);
+    try {
+      expect(await dirExists(dirName)).toBe(true);
+    } finally {
+      await memfs.fs.promises.rmdir(dirName);
+    }
   });
 });
