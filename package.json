@@ -2,6 +2,7 @@
   "name": "big-shuffle",
   "version": "1.0.0-dev",
   "description": "Linear-time shuffling of large data sets",
+  "type": "module",
   "keywords": [
     "shuffle",
     "csv",
