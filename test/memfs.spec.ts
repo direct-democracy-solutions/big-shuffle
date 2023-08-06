@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import * as fs from 'fs/promises';
 import * as memfs from 'memfs';
 import { dirExists } from "./helpers";

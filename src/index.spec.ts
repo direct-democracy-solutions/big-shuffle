@@ -1,13 +1,14 @@
+import { jest } from '@jest/globals';
 import { fc, it } from '@fast-check/jest';
 import { Arbitrary } from 'fast-check';
-import * as shuffleModule from './index';
-import { PileManager, Piles } from './pileManager';
 import { arrayFromAsync, asyncify } from '../test/helpers';
-import { defaultNumPiles, defaultPileDir } from './index';
 import * as path from 'path';
+import * as pileManager_real from './pileManager.js';
+import * as url from 'url';
 
-jest.mock('./pileManager', () => {
+jest.unstable_mockModule('./pileManager.js', () => {
   return {
+    __esModule: true,
     PileManager: jest.fn().mockImplementation(() => {
       return {
         deal: jest.fn(),
@@ -16,6 +17,10 @@ jest.mock('./pileManager', () => {
     }),
   };
 });
+
+const shuffleModule = await import('./index.js');
+const { PileManager } = await import('./pileManager.js');
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 interface ShuffleParams {
   inStream: Iterable<string>;
@@ -38,7 +43,7 @@ describe('class mocking', () => {
 });
 
 describe('shuffle', () => {
-  const pileManager: jest.MockedObjectDeep<Piles<number>> = {
+  const pileManager: jest.MockedObject<pileManager_real.Piles<number>> = {
     deal: jest.fn(),
     items: jest.fn(),
   };
@@ -67,8 +72,10 @@ describe('shuffle', () => {
         expect(pileManagerConstructor).toHaveBeenCalledWith(
           params.pileDir !== undefined
             ? params.pileDir
-            : path.join(__dirname, defaultPileDir),
-          params.numPiles !== undefined ? params.numPiles : defaultNumPiles,
+            : path.join(__dirname, shuffleModule.defaultPileDir),
+          params.numPiles !== undefined
+            ? params.numPiles
+            : shuffleModule.defaultNumPiles,
         );
       } finally {
         pileManagerConstructor.mockClear();
@@ -81,7 +88,7 @@ describe('shuffle', () => {
     async (params: ShuffleParams) => {
       try {
         pileManagerConstructor.mockReturnValue(
-          pileManager as unknown as jest.MockedObjectDeep<PileManager>,
+          pileManager as unknown as jest.MockedObject<pileManager_real.PileManager>,
         );
         await shuffleModule.shuffle(
           asyncify(params.inStream),

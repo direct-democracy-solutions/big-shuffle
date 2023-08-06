@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { fc, it } from '@fast-check/jest';
 import * as memfs from 'memfs';
 import * as pile from './pile';

@@ -1,12 +1,28 @@
+import { jest } from '@jest/globals';
 import { fc, it } from '@fast-check/jest';
 import * as memfs from 'memfs';
 import { PileManager } from './pileManager';
 import { arrayFromAsync, dirExists } from '../test/helpers';
 import { Pile } from './pile';
 import MockedObject = jest.MockedObject;
+import type { PileManager as PileManagerType } from "./pileManager.d.ts";
+import type { Pile as PileType } from "./pile.d.ts";
 
-jest.mock('fs/promises');
-jest.mock('./pile');
+jest.unstable_mockModule('fs/promises', () =>
+  import('../__mocks__/fs/promises.js')
+);
+
+jest.unstable_mockModule('./pile', () => ({
+  __esModule: true,
+  Pile: jest.fn().mockImplementation(() => ({
+    put: jest.fn(),
+    read: jest.fn(),
+  })),
+}));
+
+const { PileManager } = await import('./pileManager.js');
+const { Pile } = await import ('./pile.js');
+const { arrayFromAsync } = await import('../test/helpers.js');
 
 interface PileManagerParams {
   pileDir: string;
@@ -23,7 +39,7 @@ const arbPileManagerParams: fc.Arbitrary<PileManagerParams> = fc.record({
   numPiles: arbPileNum,
 });
 
-const arbPileManager: fc.Arbitrary<PileManager> = arbPileManagerParams.map(
+const arbPileManager: fc.Arbitrary<PileManagerType> = arbPileManagerParams.map(
   (params) => new PileManager(params.pileDir, params.numPiles),
 );
 
@@ -55,6 +71,15 @@ describe('class mocking', () => {
     new Pile('');
     expect(jest.mocked(Pile)).toHaveBeenCalled();
   });
+
+  it('should work for fs', async () => {
+    const fs = await import('fs/promises');
+    try {
+      await expect(fs.mkdir('abc')).rejects.toBeFalsy();
+    } finally {
+      memfs.vol.reset();
+    }
+  })
 });
 
 describe('PileManager', () => {
@@ -114,7 +139,7 @@ describe('PileManager', () => {
             pileManager.pilePath(params.pileNum),
           );
         } finally {
-          pileConstructor.mockRestore();
+          pileConstructor.mockClear();
           randInt.mockRestore();
         }
       },
@@ -145,7 +170,7 @@ describe('PileManager', () => {
 
     it.prop([arbPileManager, fc.string()])(
       'should close the pile manager for writing',
-      (pileManager: PileManager, lateItem: string) => {
+      (pileManager: PileManagerType, lateItem: string) => {
         jest.spyOn(pileManager, 'dispensePile').mockResolvedValue([]);
         pileManager.items();
         expect(() => pileManager.deal(lateItem)).toThrow();
@@ -154,7 +179,7 @@ describe('PileManager', () => {
 
     it.prop([arbPileManager])(
       'should dispense ascending piles',
-      async (pileManager: PileManager) => {
+      async (pileManager: PileManagerType) => {
         const dispensePile = jest
           .spyOn(pileManager, 'dispensePile')
           .mockResolvedValue(['']);
@@ -210,7 +235,7 @@ describe('PileManager', () => {
         unshuffledPile: string[],
       ) => {
         try {
-          const pileManager: PileManager = new PileManager(
+          const pileManager: PileManagerType = new PileManager(
             params.pileManager.pileDir,
             params.pileManager.numPiles,
           );
@@ -250,7 +275,7 @@ describe('PileManager', () => {
           await pileManager.dispensePile(params.pileNum);
           expect(smallShuffle).toHaveBeenCalledWith(unshuffledPile);
         } finally {
-          jest.resetAllMocks();
+          getMockPile(params.pileNum).read.mockReset();
         }
       },
     );
@@ -284,14 +309,14 @@ describe('PileManager', () => {
   describe('smallShuffle', () => {
     it.prop([arbPileManager, fc.array(fc.string())])(
       'should return the same input array',
-      (pileManager: PileManager, values: string[]) => {
+      (pileManager: PileManagerType, values: string[]) => {
         expect(pileManager.smallShuffle(values)).toBe(values);
       },
     );
 
     it.prop([arbPileManager, fc.array(fc.string())])(
       'should retain the same elements',
-      (pileManager: PileManager, values: string[]) => {
+      (pileManager: PileManagerType, values: string[]) => {
         const inArray = values.map((x) => x);
         expect(new Set(pileManager.smallShuffle(inArray))).toEqual(
           new Set(values),
@@ -301,7 +326,7 @@ describe('PileManager', () => {
 
     it.prop([arbPileManager, fc.array(fc.string())])(
       'should use random numbers',
-      (pileManager: PileManager, values: string[]) => {
+      (pileManager: PileManagerType, values: string[]) => {
         try {
           pileManager.smallShuffle(values);
           expect(jest.mocked(Math.random)).toHaveBeenCalledTimes(values.length);
@@ -313,7 +338,7 @@ describe('PileManager', () => {
   });
 });
 
-function getMockPile(pileNum: number): MockedObject<Pile> {
+function getMockPile(pileNum: number): MockedObject<PileType> {
   const pileConstructor = jest.mocked(Pile);
-  return pileConstructor.mock.instances[pileNum] as MockedObject<Pile>;
+  return pileConstructor.mock.instances[pileNum] as MockedObject<PileType>;
 }

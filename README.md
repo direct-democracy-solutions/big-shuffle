@@ -4,29 +4,16 @@ Linear-time shuffling of large datasets for Node.js
 
 ## About
 
-This package uses the [Rao](https://www.jstor.org/stable/25049166)
-algorithm to shuffle data sets that are too large to fit in memory. The
-algorithm is described pretty well by [Chris Hardin](https://blog.janestreet.com/how-to-shuffle-a-big-dataset/).
-The input stream is randomly scattered into "piles" which
-are stored on disk. Then each pile is shuffled in-memory with
-[Fisher-Yates](https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle).
-
-If your data set is extremely large, then even your piles may not fit in
-memory. In that case, the algorithm could recurse until the piles are
-small enough, but that feature is not yet implemented here.
+This package shuffles data sets that are too large to fit in memory.
+The algorithm used is the [Rao](https://www.jstor.org/stable/25049166)
+algorithm. [Chris Hardin](https://blog.janestreet.com/how-to-shuffle-a-big-dataset/)
+has a nice blog post discussing it in detail, but the gist is that the
+input stream is randomly scattered into "piles" which are stored on
+disk. Then each pile is shuffled in-memory with [Fisher-Yates](https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle).
 
 On my personal machine, this package randomized the order of a 5.3GB, 22
-million row TSV in about three hours. I suspect it could be optimized
-quite a bit more.
-
-## Limitations / Future Work
-
-Because the input elements are written to disk as part of the shuffle,
-`big-shuffle` can only take string data. If you need to shuffle other
-types of times, serialize them to `string` first.
-
-Support for shuffling `Buffer` and `Uint8Array` objects may be added
-later if there is demand.
+million row TSV in about three and a half hours. I suspect it could be
+optimized quite a bit more.
 
 ## Getting Started
 
@@ -76,3 +63,14 @@ library, consider using `stream-to-async-iterator` [(details)](https://www.npmjs
 to convert the unshuffled stream into an iterator, and then converting
 the shuffled iterator back into a stream using `Readable.from`. See
 [test/e2e.spec.ts] for an example using streams to shuffle a CSV.
+
+## Limitations / Future Work
+
+Because the input elements are written to disk as part of the shuffle,
+`big-shuffle` can only take string data. If you need to shuffle other
+types of times, serialize them to `string` first. Support for shuffling
+`Buffer` and `Uint8Array` objects may be added later if there is demand.
+
+If your data set is extremely large, then even your piles may not fit in
+memory. In that case, the algorithm could recurse until the piles are
+small enough, but that feature is not yet implemented here.

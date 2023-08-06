@@ -21,7 +21,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" --fix",
     "lint:ci": "eslint \"src/**/*.ts\" \"test/**/*.ts\"",
-    "test": "jest",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage"
   },
@@ -31,6 +31,7 @@
     "@types/node": "^20.4.1",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
+    "cross-env": "^7.0.3",
     "csv-parse": "^5.4.0",
     "csv-stringify": "^6.4.0",
     "eslint": "^8.0.1",
@@ -42,6 +43,7 @@
     "prettier": "^2.3.2",
     "stream-to-async-iterator": "^1.0.0",
     "ts-jest": "^29.1.1",
+    "ts-jest-resolver": "^2.0.1",
     "typescript": "^5.1.6"
   }
 }

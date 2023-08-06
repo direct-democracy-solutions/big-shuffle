@@ -1,7 +1,11 @@
+import { jest } from '@jest/globals';
 import * as fs from 'fs/promises';
+import * as url from 'url';
 import { FileHandle } from 'fs/promises';
 import * as path from 'path';
 import * as memfs from "memfs";
+
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 describe('node fs module', () => {
   const testFilePath = path.join(__dirname, 'test-file.txt');

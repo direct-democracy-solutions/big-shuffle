@@ -1,3 +1,7 @@
+import { jest } from '@jest/globals';
+import type { FileHandle } from "fs/promises";
+
+const { open } = await import('fs/promises');
 import { FileHandle, open } from 'fs/promises';
 import * as memfs from 'memfs';
 
@@ -21,7 +25,7 @@ export async function ifAFileWasOpened<T>(
   try {
     const mockOpen = jest.mocked(open);
     if (mockOpen.mock.calls.length > 0) {
-      const pileFile = await mockOpen.mock.results[0].value;
+      const pileFile: FileHandle = (await mockOpen.mock.results[0].value) as FileHandle;
       return f(pileFile);
     }
   } finally {

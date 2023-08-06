@@ -1,6 +1,8 @@
 import * as path from 'path';
-import * as fs from 'fs/promises';
-import { Pile } from './pile';
+import type { Pile as PileType } from './pile.d.ts';
+
+const fs = await import('fs/promises');
+const { Pile } = await import('./pile.js');
 
 export interface Piles<T> {
   deal(item: T): void;
@@ -12,7 +14,7 @@ const closedMsg =
   'This pile manager is closed; once items() has been called, no more elements may be added.';
 
 export class PileManager implements Piles<string> {
-  private readonly piles: Pile[] = [];
+  private readonly piles: PileType[] = [];
   private closed = false;
   private readonly createdDir: Promise<string | void>;
 
