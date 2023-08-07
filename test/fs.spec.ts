@@ -35,7 +35,7 @@ describe('node fs module', () => {
   });
 
   it('should allow directories named __proto__', async () => {
-    const dirName = '/__proto__';
+    const dirName = path.join(__dirname, '__proto__');
     expect(await dirExistsForReal(dirName)).toBe(false);
     await fs.mkdir(dirName);
     try {
