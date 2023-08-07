@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import { FileHandle } from 'fs/promises';
 import * as path from 'path';
-import * as memfs from "memfs";
+import * as memfs from 'memfs';
 
 describe('node fs module', () => {
   const testFilePath = path.join(__dirname, 'test-file.txt');
@@ -52,4 +52,3 @@ function dirExistsForReal(path: string): Promise<boolean> {
     .then(() => true)
     .catch(() => false);
 }
-

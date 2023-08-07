@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises';
 import * as memfs from 'memfs';
-import { dirExists } from "./helpers";
+import { dirExists } from './helpers';
 
 jest.mock('fs/promises');
 
