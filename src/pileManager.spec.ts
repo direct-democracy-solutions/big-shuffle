@@ -1,7 +1,8 @@
 import { fc, it } from '@fast-check/jest';
 import * as memfs from 'memfs';
+import * as fs from 'fs/promises';
 import { PileManager } from './pileManager';
-import { arrayFromAsync, dirExists } from '../test/helpers';
+import { Delayed, Checkable, arrayFromAsync, dirExists } from '../test/helpers';
 import { Pile } from './pile';
 import MockedObject = jest.MockedObject;
 
@@ -168,21 +169,29 @@ describe('PileManager', () => {
     );
 
     it.prop([arbPileManagerParamsWithPiles])(
-      'should terminate after the last item has been dispensed',
+      'should terminate after the shuffle directory is removed',
       async (params) => {
         const pileManager = new PileManager(
           params.pileManager.pileDir,
           params.pileManager.numPiles,
         );
         const totalItems = params.piles.flat().length;
+        const rmDelay = new Delayed(memfs.fs.promises.rm);
         jest
           .spyOn(pileManager, 'dispensePile')
           .mockImplementation((n) => Promise.resolve(params.piles[n]));
-        let numIterations = 0;
-        for await (const _ of pileManager.items()) {
-          expect(numIterations).toBeLessThan(totalItems);
-          numIterations++;
+        jest.mocked(fs.rm)
+          .mockImplementationOnce((...args) => rmDelay.start(...args));
+        const items = pileManager.items()[Symbol.asyncIterator]();
+        for (let i = 0; i < totalItems; i++) {
+          await expect(items.next()).resolves.toHaveProperty('done', false);
         }
+        const finalIteration = new Checkable(items.next());
+        expect(finalIteration.isFinished).toBe(false);
+        rmDelay.resolve();
+        await new Promise(resolve => setTimeout(resolve ,1000));
+        expect(finalIteration.isFinished).toBe(true);
+        await expect(finalIteration.promise).resolves.toEqual({ value: undefined, done: true });
       },
     );
 

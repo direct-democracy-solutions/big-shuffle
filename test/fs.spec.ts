@@ -44,6 +44,14 @@ describe('node fs module', () => {
       await fs.rmdir(dirName);
     }
   });
+
+
+  it('does not error on close after delete', async () => {
+    const testPath = path.join(__dirname, 'test-file-1');
+    const f = await fs.open(testPath, 'w');
+    await fs.unlink(testPath);
+    await f.close();
+  });
 });
 
 function dirExistsForReal(path: string): Promise<boolean> {

@@ -1,9 +1,10 @@
 import { fc, it } from '@fast-check/jest';
+import * as fs from 'fs/promises';
 import * as memfs from 'memfs';
 import * as pile from './pile';
 import { Pile } from './pile';
 import * as path from 'path';
-import { Arbitrary, hexaString, webPath } from 'fast-check';
+import { Arbitrary } from 'fast-check';
 import { Checkable, Delayed, ifAFileWasOpened } from '../test/helpers';
 
 jest.mock('fs/promises');
@@ -14,8 +15,9 @@ interface PileParams {
 }
 
 const arbPileParams: Arbitrary<PileParams> = fc.record({
-  dirPath: webPath(),
-  fileName: hexaString({ minLength: 1 }),
+  dirPath: fc.webPath()
+    .filter(p => !p.includes('__proto__')),
+  fileName: fc.hexaString({ minLength: 1 }),
 });
 
 const arbPileItem: Arbitrary<string> = fc
@@ -55,6 +57,22 @@ describe('Pile', () => {
   });
 
   describe('read', () => {
+
+    it.prop([arbPileParams, arbPileItem])(
+     'should wait until all pending put calls are complete',
+      async (params: PileParams, content: string) => {
+        const pile = new Pile(path.join(params.dirPath, params.fileName));
+        const delayedOpen = new Delayed((path: string, mode: string) => memfs.fs.promises.open(path, mode) as Promise<fs.FileHandle>, 'fs.open');
+        jest.mocked(fs.open).mockImplementationOnce((...args) => delayedOpen.start(...args));
+        const putResult = new Checkable(pile.put(content), 'put');
+        const readResult = new Checkable(pile.read(), 'read');
+        expect(readResult.isFinished).toBe(false);
+        delayedOpen.resolve();
+        await readResult.promise;
+        expect(putResult.isFinished).toBe(true);
+      },
+    );
+
     it.prop([arbPileParams, fc.array(arbPileItem)])(
       'should wait until the write stream is closed',
       async (params: PileParams, contents: string[]) => {

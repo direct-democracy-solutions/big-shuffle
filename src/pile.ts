@@ -1,4 +1,3 @@
-import { FileHandle } from 'fs/promises';
 import * as fs from 'fs/promises';
 
 export const delim = '\n';
@@ -12,7 +11,7 @@ const pileClosedMessage =
 
 export class Pile {
   size = 0;
-  private file: Promise<FileHandle> | undefined;
+  private file: Promise<fs.FileHandle> | undefined;
   private closed = false;
 
   constructor(private readonly path: string) {}
@@ -22,6 +21,7 @@ export class Pile {
       throw new Error(pileClosedMessage);
     }
     const file = await this.ensureFileIsOpen();
+    // If this is too slow, try refactoring to use fs.createWriteStream instead.
     await file.appendFile(this.escapeItem(item) + delim);
     this.size++;
   }
@@ -36,14 +36,14 @@ export class Pile {
     }
   }
 
-  private ensureFileIsOpen(): Promise<FileHandle> {
+  private ensureFileIsOpen(): Promise<fs.FileHandle> {
     if (this.file === undefined) {
       this.file = fs.open(this.path, 'w');
     }
     return this.file;
   }
 
-  private async loadAndDeleteFile(file: Promise<FileHandle>): Promise<string> {
+  private async loadAndDeleteFile(file: Promise<fs.FileHandle>): Promise<string> {
     await (await file).close();
     const content = await fs.readFile(this.path, { encoding: pileEncoding });
     if (this.file !== undefined) {

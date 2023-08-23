@@ -6,7 +6,7 @@ export const defaultPileDir = 'shuffle_piles';
 
 export async function shuffle(
   inStream: AsyncIterable<string>,
-  numPiles = defaultNumPiles,
+  numPiles: number = defaultNumPiles,
   pileDir: string = path.join(__dirname, defaultPileDir),
 ): Promise<AsyncIterable<string>> {
   const pileManager: Piles<string> = new PileManager(pileDir, numPiles);

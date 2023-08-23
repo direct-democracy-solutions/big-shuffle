@@ -70,4 +70,12 @@ describe('memfs integration', () => {
       await memfs.fs.promises.rmdir(dirName);
     }
   });
+
+  // Bug report: https://github.com/streamich/memfs/issues/942
+  it.failing('should not error on close after delete', async () => {
+    const testPath = path.join(__dirname, 'my-test-file');
+    const f = await memfs.fs.promises.open(testPath, 'w');
+    await memfs.fs.promises.unlink(testPath);
+    await f.close();
+  });
 });

@@ -44,16 +44,17 @@ export class PileManager implements Piles<string> {
   }
 
   private async *_items(): AsyncGenerator<string> {
+    let tempDirRemoval: Promise<void>;
     for (let p = 0; p < this.numPiles; p++) {
       const items = await this.dispensePile(p);
       if (p === this.numPiles - 1) {
-        await this.removeTempDir();
+        tempDirRemoval = this.removeTempDir();
       }
       for (const i of items) {
         yield i;
       }
-      items.length = 0;
     }
+    await tempDirRemoval!;
   }
 
   async dispensePile(pileNum: number): Promise<string[]> {

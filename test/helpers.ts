@@ -39,31 +39,33 @@ export function dirExists(path: string): Promise<boolean> {
 export class Delayed<T> {
   private readonly delay: Promise<void>;
 
-  resolve: (value?: any) => void = () => {
-    throw new Error('Resolve called before set');
-  };
-
-  constructor(private readonly f: () => Promise<T>) {
+  constructor(
+    private readonly f: (...args: any[]) => Promise<T>,
+    private readonly name?: string
+  ) {
     this.delay = new Promise((resolve) => {
       this.resolve = resolve;
     });
   }
 
-  start(): Promise<T> {
-    return this.delay.then(() => this.f());
+  start(...args: any[]): Promise<T> {
+    return this.delay
+      .then(() => this.f(...args));
   }
+
+  resolve: (value?: any) => void = () => {
+    throw new Error('Resolve called before set');
+  };
 }
 
 export class Checkable<T> {
   isFinished = false;
   readonly promise: Promise<T>;
 
-  constructor(p: Promise<T>) {
-    this.promise = new Promise((resolve) => {
-      p.then((r: T) => {
-        this.isFinished = true;
-        resolve(r);
-      });
+  constructor(p: Promise<T>, private readonly name?: string) {
+    this.promise = p.then((r: T) => {
+      this.isFinished = true;
+      return r;
     });
   }
 }
