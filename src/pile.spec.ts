@@ -15,8 +15,7 @@ interface PileParams {
 }
 
 const arbPileParams: Arbitrary<PileParams> = fc.record({
-  dirPath: fc.webPath()
-    .filter(p => !p.includes('__proto__')),
+  dirPath: fc.webPath().filter((p) => !p.includes('__proto__')),
   fileName: fc.hexaString({ minLength: 1 }),
 });
 
@@ -57,13 +56,18 @@ describe('Pile', () => {
   });
 
   describe('read', () => {
-
     it.prop([arbPileParams, arbPileItem])(
-     'should wait until all pending put calls are complete',
+      'should wait until all pending put calls are complete',
       async (params: PileParams, content: string) => {
         const pile = new Pile(path.join(params.dirPath, params.fileName));
-        const delayedOpen = new Delayed((path: string, mode: string) => memfs.fs.promises.open(path, mode) as Promise<fs.FileHandle>, 'fs.open');
-        jest.mocked(fs.open).mockImplementationOnce((...args) => delayedOpen.start(...args));
+        const delayedOpen = new Delayed(
+          (path: string, mode: string) =>
+            memfs.fs.promises.open(path, mode) as Promise<fs.FileHandle>,
+          'fs.open',
+        );
+        jest
+          .mocked(fs.open)
+          .mockImplementationOnce((...args) => delayedOpen.start(...args));
         const putResult = new Checkable(pile.put(content), 'put');
         const readResult = new Checkable(pile.read(), 'read');
         expect(readResult.isFinished).toBe(false);

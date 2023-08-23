@@ -180,7 +180,8 @@ describe('PileManager', () => {
         jest
           .spyOn(pileManager, 'dispensePile')
           .mockImplementation((n) => Promise.resolve(params.piles[n]));
-        jest.mocked(fs.rm)
+        jest
+          .mocked(fs.rm)
           .mockImplementationOnce((...args) => rmDelay.start(...args));
         const items = pileManager.items()[Symbol.asyncIterator]();
         for (let i = 0; i < totalItems; i++) {
@@ -189,9 +190,12 @@ describe('PileManager', () => {
         const finalIteration = new Checkable(items.next());
         expect(finalIteration.isFinished).toBe(false);
         rmDelay.resolve();
-        await new Promise(resolve => setTimeout(resolve ,1000));
+        await new Promise(resolve => setTimeout(resolve, 0));
         expect(finalIteration.isFinished).toBe(true);
-        await expect(finalIteration.promise).resolves.toEqual({ value: undefined, done: true });
+        await expect(finalIteration.promise).resolves.toEqual({
+          value: undefined,
+          done: true,
+        });
       },
     );
 

@@ -41,7 +41,7 @@ export class Delayed<T> {
 
   constructor(
     private readonly f: (...args: any[]) => Promise<T>,
-    private readonly name?: string
+    private readonly name?: string,
   ) {
     this.delay = new Promise((resolve) => {
       this.resolve = resolve;
@@ -49,8 +49,7 @@ export class Delayed<T> {
   }
 
   start(...args: any[]): Promise<T> {
-    return this.delay
-      .then(() => this.f(...args));
+    return this.delay.then(() => this.f(...args));
   }
 
   resolve: (value?: any) => void = () => {

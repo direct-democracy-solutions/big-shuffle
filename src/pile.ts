@@ -43,7 +43,9 @@ export class Pile {
     return this.file;
   }
 
-  private async loadAndDeleteFile(file: Promise<fs.FileHandle>): Promise<string> {
+  private async loadAndDeleteFile(
+    file: Promise<fs.FileHandle>,
+  ): Promise<string> {
     await (await file).close();
     const content = await fs.readFile(this.path, { encoding: pileEncoding });
     if (this.file !== undefined) {
