@@ -113,3 +113,33 @@ describe('shuffle', () => {
     },
   );
 });
+
+describe('ShuffleTransform', () => {
+  const pileManagerConstructor = jest.mocked(PileManager);
+
+  it.only.prop([arbShuffleParams])(
+    'should create a pile manager with the requested number of piles and pileDir',
+    (params: ShuffleParams) => {
+      if (params.pileDir !== undefined) {
+        new shuffleModule.ShuffleTransform(params.numPiles, params.pileDir);
+      } else if (params.numPiles !== undefined) {
+        new shuffleModule.ShuffleTransform(params.numPiles);
+      } else {
+        new shuffleModule.ShuffleTransform();
+      }
+      try {
+        expect(pileManagerConstructor).toHaveBeenCalledWith(
+          params.pileDir !== undefined
+            ? params.pileDir
+            : path.join(__dirname, defaultPileDir),
+          params.numPiles !== undefined ? params.numPiles : defaultNumPiles,
+        );
+      } finally {
+        pileManagerConstructor.mockClear();
+      }
+    },
+  );
+
+  it.todo('should deal each input element into the piles');
+  it.todo('should flush the items from the pile manager');
+});
