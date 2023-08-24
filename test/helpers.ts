@@ -68,3 +68,31 @@ export class Checkable<T> {
     });
   }
 }
+
+export function any(): fc.Arbitrary<any> {
+  return fc.oneof(
+    fc.constantFrom(undefined, null),
+    fc.boolean(),
+    fc.integer(),
+    fc.double(),
+    fc.string(),
+    fc.object(),
+  );
+}
+
+export class CountTransform extends stream.Transform {
+  count = 0;
+
+  constructor(options?: { objectMode: true; highWaterMark?: number }) {
+    super(options || { objectMode: true });
+  }
+
+  _transform(
+    chunk: any,
+    encoding: string | null,
+    callback: stream.TransformCallback,
+  ) {
+    this.count++;
+    callback(null, chunk);
+  }
+}
