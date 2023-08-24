@@ -36,7 +36,26 @@ export class ShuffleTransform extends Transform {
   }
 
   _flush(callback: TransformCallback) {
-    callback();
+    this.flushPileManager()
+      .then(() => callback())
+      .catch((e) => callback(e));
+  }
+
+  private async flushPileManager(): Promise<void> {
+    for await (const item of await this.pileManager.items()) {
+      await this.safePush(item);
+    }
+  }
+
+  /** Push and resolve when it is safe to push again */
+  private safePush(item: string): Promise<void> {
+    if (this.push(item)) {
+      return Promise.resolve();
+    } else {
+      return new Promise((resolve) => {
+        this.once('drain', resolve);
+      });
+    }
   }
 }
 

@@ -1,3 +1,4 @@
+import * as stream from 'stream';
 import { FileHandle, open } from 'fs/promises';
 import * as memfs from 'memfs';
 import fc from 'fast-check';
@@ -79,4 +80,21 @@ export function any(): fc.Arbitrary<any> {
     fc.string(),
     fc.object(),
   );
+}
+
+export class CountTransform extends stream.Transform {
+  count = 0;
+
+  constructor() {
+    super({ objectMode: true });
+  }
+
+  _transform(
+    chunk: any,
+    encoding: string | null,
+    callback: stream.TransformCallback,
+  ) {
+    this.count++;
+    callback(null, chunk);
+  }
 }
