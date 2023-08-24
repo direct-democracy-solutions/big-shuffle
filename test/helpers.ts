@@ -1,5 +1,6 @@
 import { FileHandle, open } from 'fs/promises';
 import * as memfs from 'memfs';
+import fc from 'fast-check';
 
 export async function* asyncify<T>(it: Iterable<T>): AsyncIterable<T> {
   for (const i of it) {
@@ -67,4 +68,15 @@ export class Checkable<T> {
       return r;
     });
   }
+}
+
+export function any(): fc.Arbitrary<any> {
+  return fc.oneof(
+    fc.constantFrom(undefined, null),
+    fc.boolean(),
+    fc.integer(),
+    fc.double(),
+    fc.string(),
+    fc.object(),
+  );
 }

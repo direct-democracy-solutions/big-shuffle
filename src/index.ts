@@ -18,20 +18,25 @@ export async function shuffle(
 }
 
 export class ShuffleTransform extends Transform {
+  private readonly pileManager;
   constructor(
     numPiles: number = defaultNumPiles,
     pileDir: string = path.join(__dirname, defaultPileDir),
   ) {
     super({ objectMode: true });
-    new PileManager(pileDir, numPiles);
+    this.pileManager = new PileManager(pileDir, numPiles);
   }
 
   _transform(chunk: any, encoding: string | null, callback: TransformCallback) {
-    throw new Error('Not implemented yet');
+    if (typeof chunk !== 'string') {
+      throw new TypeError(`chunk must be a string, got ${chunk}`);
+    }
+    this.pileManager.deal(chunk);
+    callback();
   }
 
   _flush(callback: TransformCallback) {
-    throw new Error('Not implemented yet');
+    callback();
   }
 }
 

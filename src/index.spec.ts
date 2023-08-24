@@ -1,10 +1,13 @@
+import * as path from 'path';
+import { Readable } from 'stream';
+import { pipeline } from 'stream/promises';
+import NullWritable from 'null-writable';
 import { fc, it } from '@fast-check/jest';
 import { Arbitrary } from 'fast-check';
 import * as shuffleModule from './index';
+import { defaultNumPiles, defaultPileDir, ShuffleTransform } from './index';
 import { PileManager, Piles } from './pileManager';
-import { arrayFromAsync, asyncify } from '../test/helpers';
-import { defaultNumPiles, defaultPileDir } from './index';
-import * as path from 'path';
+import { any, arrayFromAsync, asyncify } from '../test/helpers';
 
 jest.mock('./pileManager', () => {
   return {
@@ -117,7 +120,27 @@ describe('shuffle', () => {
 describe('ShuffleTransform', () => {
   const pileManagerConstructor = jest.mocked(PileManager);
 
-  it.only.prop([arbShuffleParams])(
+  const pileManager: jest.MockedObjectDeep<Piles<string>> = {
+    deal: jest.fn(),
+    items: jest.fn(),
+  };
+
+  beforeAll(() => {
+    pileManagerConstructor.mockReturnValue(
+      pileManager as unknown as jest.MockedObjectDeep<PileManager>,
+    );
+  });
+
+  afterEach(() => {
+    pileManager.deal.mockClear();
+    pileManager.items.mockClear();
+  });
+
+  afterAll(() => {
+    pileManagerConstructor.mockReset();
+  });
+
+  it.prop([arbShuffleParams])(
     'should create a pile manager with the requested number of piles and pileDir',
     (params: ShuffleParams) => {
       if (params.pileDir !== undefined) {
@@ -140,6 +163,37 @@ describe('ShuffleTransform', () => {
     },
   );
 
-  it.todo('should deal each input element into the piles');
+  it.prop([arbShuffleParams, fc.array(fc.string()), fc.array(fc.string())])(
+    'should deal each input element into the piles',
+    async (
+      params: ShuffleParams,
+      elementsIn: string[],
+      elementsOut: string[],
+    ) => {
+      const transform = new ShuffleTransform(params.numPiles, params.pileDir);
+      try {
+        pileManager.items.mockResolvedValue(asyncify(elementsOut) as never);
+        await pipeline(
+          Readable.from(elementsIn),
+          transform,
+          new NullWritable({ objectMode: true }),
+        );
+        expect(pileManager.deal.mock.calls).toEqual(
+          elementsIn.map((x: string) => [x]),
+        );
+      } finally {
+        pileManager.deal.mockClear();
+      }
+    },
+  );
+
+  it.prop([arbShuffleParams, any().filter((x: any) => typeof x !== 'string')])(
+    'should reject non-string chunks',
+    (params: ShuffleParams, invalidChunk: any) => {
+      const transform = new ShuffleTransform(params.numPiles, params.pileDir);
+      expect(() => transform.write(invalidChunk)).toThrow();
+    },
+  );
+
   it.todo('should flush the items from the pile manager');
 });
