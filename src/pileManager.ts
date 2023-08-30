@@ -44,7 +44,7 @@ export class PileManager implements Piles<string> {
   }
 
   private async *_items(): AsyncGenerator<string> {
-    let tempDirRemoval: Promise<void>;
+    let tempDirRemoval: Promise<void> = Promise.resolve();
     for (let p = 0; p < this.numPiles; p++) {
       const items = await this.dispensePile(p);
       if (p === this.numPiles - 1) {
@@ -54,7 +54,7 @@ export class PileManager implements Piles<string> {
         yield i;
       }
     }
-    await tempDirRemoval!;
+    await tempDirRemoval;
   }
 
   async dispensePile(pileNum: number): Promise<string[]> {

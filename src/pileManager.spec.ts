@@ -136,6 +136,8 @@ describe('PileManager', () => {
           .spyOn(pileManager, 'dispensePile')
           .mockImplementation((n) => Promise.resolve(params.piles[n]));
         const items = pileManager.items()[Symbol.asyncIterator]();
+        // No way to omit the variable declaration from a for ... of
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for (const _ of params.piles.slice(0, -1).flat()) {
           await items.next();
         }
