@@ -1,5 +1,7 @@
+import * as stream from 'stream';
 import { FileHandle, open } from 'fs/promises';
 import * as memfs from 'memfs';
+import fc from 'fast-check';
 
 export async function* asyncify<T>(it: Iterable<T>): AsyncIterable<T> {
   for (const i of it) {

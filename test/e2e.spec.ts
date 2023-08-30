@@ -4,7 +4,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import StreamToAsyncIterator from 'stream-to-async-iterator';
 import { pipeline, Readable, Transform, TransformCallback } from 'stream';
-import shuffle from '../src';
+import { shuffle, ShuffleTransform } from '../src';
+import { CountTransform } from './helpers';
 import ErrnoException = NodeJS.ErrnoException;
 
 const fileSettings: csv_read.Options & csv_write.Options = {
@@ -47,23 +48,6 @@ describe('shuffle', () => {
       return record;
     }
 
-    function pipelineCompleteHandler(
-      name: string,
-      resolve?: (r?: any) => void,
-      reject?: (e: Error) => void,
-    ): (e?: ErrnoException | null) => void {
-      return (e?: ErrnoException | null): void => {
-        if (e !== null && e !== undefined) {
-          console.error(e);
-          if (reject !== undefined) {
-            reject(e);
-          }
-        } else if (resolve !== undefined) {
-          resolve();
-        }
-      };
-    }
-
     const inStream = pipeline(
       fs.createReadStream(path.join(__dirname, inFileName)),
       csv_read.parse(parserOptions).once('data', (record) => {
@@ -99,6 +83,33 @@ describe('shuffle', () => {
   });
 });
 
+describe('ShuffleTransform', () => {
+  it('should properly shuffle a CSV', async () => {
+    const columns: string[] = await getHeaders(
+      path.join(__dirname, inFileName),
+    );
+    const countIn = new CountTransform();
+    const countOut = new CountTransform();
+
+    await new Promise((resolve, reject) => {
+      pipeline(
+        fs.createReadStream(path.join(__dirname, inFileName)),
+        csv_read.parse(parserOptions),
+        new LambdaTransform((o: object) => JSON.stringify(o)),
+        countIn,
+        new ShuffleTransform(numPiles, pileDirPath),
+        countOut,
+        new LambdaTransform((line: string) => JSON.parse(line)),
+        csv_write.stringify({ columns, ...writeOptions }),
+        fs.createWriteStream(path.join(__dirname, outFileName)),
+        pipelineCompleteHandler('testPipeline', resolve, reject),
+      );
+    });
+
+    expect(countOut.count).toEqual(countIn.count);
+  });
+});
+
 class LambdaTransform<T, U> extends Transform {
   constructor(private readonly f: (o: T) => U) {
     super({ objectMode: true });
@@ -115,4 +126,42 @@ class LambdaTransform<T, U> extends Transform {
       callback(e as Error);
     }
   }
+}
+
+function pipelineCompleteHandler(
+  name: string,
+  resolve?: (r?: any) => void,
+  reject?: (e: Error) => void,
+): (e?: ErrnoException | null) => void {
+  return (e?: ErrnoException | null): void => {
+    if (e !== null && e !== undefined) {
+      console.error(e);
+      if (reject !== undefined) {
+        reject(e);
+      }
+    } else if (resolve !== undefined) {
+      resolve();
+    }
+  };
+}
+
+function getHeaders(filePath: string): Promise<string[]> {
+  return new Promise((resolve) => {
+    const parser = csv_read.parse(parserOptions);
+    let headers: string[];
+    fs.createReadStream(filePath).pipe(
+      parser
+        .once('data', (record) => {
+          headers = Object.keys(record);
+          parser.destroy();
+        })
+        .once('close', () => {
+          if (headers === undefined) {
+            throw new Error('headers not set before close');
+          } else {
+            resolve(headers);
+          }
+        }),
+    );
+  });
 }

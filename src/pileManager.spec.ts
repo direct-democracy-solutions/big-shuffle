@@ -192,7 +192,7 @@ describe('PileManager', () => {
         const finalIteration = new Checkable(items.next());
         expect(finalIteration.isFinished).toBe(false);
         rmDelay.resolve();
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise((resolve) => setTimeout(resolve, 0));
         expect(finalIteration.isFinished).toBe(true);
         await expect(finalIteration.promise).resolves.toEqual({
           value: undefined,
