@@ -1,3 +1,5 @@
+import * as stream from 'stream';
+import * as fsStream from 'fs';
 import * as fs from 'fs/promises';
 
 export const delim = '\n';
@@ -11,7 +13,7 @@ const pileClosedMessage =
 
 export class Pile {
   size = 0;
-  private file: Promise<fs.FileHandle> | undefined;
+  private file: stream.Writable | undefined;
   private closed = false;
 
   constructor(private readonly path: string) {}
@@ -20,10 +22,13 @@ export class Pile {
     if (this.closed) {
       throw new Error(pileClosedMessage);
     }
-    const file = await this.ensureFileIsOpen();
-    // If this is too slow, try refactoring to use fs.createWriteStream instead.
-    await file.appendFile(this.escapeItem(item) + delim);
+    const file = this.ensureFileIsOpen();
     this.size++;
+    if (!file.write(this.escapeItem(item) + delim)) {
+      await new Promise(resolve =>
+        file.once('drain', resolve)
+      );
+    }
   }
 
   async read(): Promise<string[]> {
@@ -36,22 +41,28 @@ export class Pile {
     }
   }
 
-  private ensureFileIsOpen(): Promise<fs.FileHandle> {
+  private ensureFileIsOpen(): stream.Writable {
     if (this.file === undefined) {
-      this.file = fs.open(this.path, 'w');
+      this.file = fsStream.createWriteStream(this.path);
     }
     return this.file;
   }
 
-  private async loadAndDeleteFile(
-    file: Promise<fs.FileHandle>,
-  ): Promise<string> {
-    await (await file).close();
+  private async loadAndDeleteFile(file: stream.Writable): Promise<string> {
+    await this.closeWriteStream(file);
     const content = await fs.readFile(this.path, { encoding: pileEncoding });
     if (this.file !== undefined) {
       await fs.unlink(this.path);
     }
     return content;
+  }
+
+  private closeWriteStream(stream: stream.Writable): Promise<void> {
+    const p = new Promise(resolve =>
+      stream.once('close', resolve)
+    );
+    stream.end();
+    return p.then();
   }
 
   private *parsePile(pileStr: string): Iterable<string> {

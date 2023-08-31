@@ -7,6 +7,7 @@ import * as path from 'path';
 import { Arbitrary } from 'fast-check';
 import { Checkable, Delayed, ifAFileWasOpened } from '../test/helpers';
 
+jest.mock('fs');
 jest.mock('fs/promises');
 
 interface PileParams {
