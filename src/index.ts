@@ -1,6 +1,6 @@
 import { TransformCallback } from 'stream';
 import * as path from 'path';
-import { DrainAwareTransform } from './drain-aware-transform';
+import { DrainAwareTransform } from 'drain-aware-transform';
 import { PileManager, Piles } from './pileManager';
 
 export const defaultNumPiles = 1000;
