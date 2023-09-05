@@ -25,9 +25,7 @@ export class Pile {
     const file = this.ensureFileIsOpen();
     this.size++;
     if (!file.write(this.escapeItem(item) + delim)) {
-      await new Promise(resolve =>
-        file.once('drain', resolve)
-      );
+      await new Promise((resolve) => file.once('drain', resolve));
     }
   }
 
@@ -58,9 +56,7 @@ export class Pile {
   }
 
   private closeWriteStream(stream: stream.Writable): Promise<void> {
-    const p = new Promise(resolve =>
-      stream.once('close', resolve)
-    );
+    const p = new Promise((resolve) => stream.once('close', resolve));
     stream.end();
     return p.then();
   }
