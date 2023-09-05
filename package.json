@@ -1,6 +1,6 @@
 {
   "name": "big-shuffle",
-  "version": "1.0.0-dev",
+  "version": "1.0.0",
   "description": "Linear-time shuffling of large data sets",
   "keywords": [
     "shuffle",
