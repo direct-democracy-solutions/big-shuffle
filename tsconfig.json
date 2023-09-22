@@ -1,8 +1,14 @@
 {
   "include": [ "src/**/*.ts" ],
-  "exclude": [ "src/**/*.spec.ts" ],
+  "exclude": [
+    "src/**/*.spec.ts",
+  ],
   "compilerOptions": {
     "strict": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
     "outDir": "lib",
+    "target": "es2017",
+    "declaration": true
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "big-shuffle",
-  "version": "0.1.0-dev",
+  "version": "1.0.0-dev",
   "description": "Linear-time shuffling of large data sets",
   "keywords": [
     "shuffle",
@@ -10,27 +10,37 @@
   "homepage": "https://github.com/direct-democracy-solutions/big-shuffle",
   "bugs": "https://github.com/direct-democracy-solutions/big-shuffle/issues",
   "license": "CC0-1.0",
+  "main": "lib/index.js",
   "files": [
-    "lib/**"
+    "lib/"
   ],
   "repository": "github:direct-democracy-solutions/big-shuffle",
   "scripts": {
     "build": "tsc --build",
     "format": "prettier --write \"src/**/*.ts\"",
-    "lint": "eslint \"src/**/*.ts\" --fix",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" --fix",
+    "lint:ci": "eslint \"src/**/*.ts\" \"test/**/*.ts\"",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage"
   },
   "devDependencies": {
+    "@fast-check/jest": "^1.7.0",
     "@types/jest": "^29.5.2",
+    "@types/node": "^20.4.1",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
+    "csv-parse": "^5.4.0",
+    "csv-stringify": "^6.4.0",
     "eslint": "^8.0.1",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
+    "fast-check": "^3.11.0",
     "jest": "^29.6.1",
+    "memfs": "^4.2.0",
+    "null-writable": "^1.0.5",
     "prettier": "^2.3.2",
+    "stream-to-async-iterator": "^1.0.0",
     "ts-jest": "^29.1.1",
     "typescript": "^5.1.6"
   }
